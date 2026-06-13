@@ -1,0 +1,26 @@
+# CMake build directories
+/build/
+/out/
+/CMakeUserPresets.json
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.db
+*.opendb
+*.VC.db
+
+# MSVC Build Outputs
+x64/
+x86/
+Debug/
+Release/
+
+# Compiled files
+*.obj
+*.lib
+*.dll
+*.pdb
+*.exe
+*.exp
