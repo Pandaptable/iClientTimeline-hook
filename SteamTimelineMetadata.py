@@ -389,12 +389,28 @@ def _embed_thread(recording, orig_path):
 			creationflags=creation_flags,
 		)
 		if result.returncode == 0:
-			try:
-				os.replace(tmp, video)
+			success = False
+			last_err = None
+			for attempt in range(30):
+				try:
+					os.replace(tmp, video)
+					success = True
+					break
+				except OSError as e:
+					last_err = e
+					# 32 is ERROR_SHARING_VIOLATION on Windows
+					if getattr(e, "winerror", None) == 32 or sys.platform != "win32":
+						time.sleep(1.0)
+					else:
+						break
+			if success:
 				print(f"[SteamTimeline] Metadata embedded in {os.path.basename(video)}")
-			except OSError:
-				os.remove(tmp)
-				print("[SteamTimeline] Could not replace original file with temp")
+			else:
+				print(f"[SteamTimeline] Could not replace original file with temp: {last_err}")
+				try:
+					os.remove(tmp)
+				except OSError:
+					pass
 		else:
 			print(f"[SteamTimeline] FFmpeg failed:\n{result.stderr.strip()}")
 			try:
