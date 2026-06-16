@@ -16,11 +16,15 @@ add_library(SteamClientHook SHARED
 )
 set_target_properties(SteamClientHook PROPERTIES OUTPUT_NAME "dwmapi")
 
+set(HOOK_DLLS "$ENV{HOOK_DLLS}")
+string(REPLACE ";" "|" HOOK_DLLS_STR "${HOOK_DLLS}")
+string(REPLACE "," "|" HOOK_DLLS_STR "${HOOK_DLLS_STR}")
 
 target_compile_definitions(SteamClientHook PRIVATE
     -D_ITERATOR_DEBUG_LEVEL=0
     -D_CRT_SECURE_NO_WARNINGS
     -DNOMINMAX
+    "HOOK_DLLS=\"${HOOK_DLLS_STR}\""
 )
 
 include(FetchContent)

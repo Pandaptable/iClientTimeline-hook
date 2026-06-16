@@ -76,7 +76,7 @@ class State:
 		if evt_type == "AddInstantaneousTimelineEvent":
 			return {
 				"type": "instant",
-				"t": now,
+				"t": now + data.get("startOffset", 0.0),
 				"title": data.get("title", ""),
 				"desc": data.get("description", ""),
 				"icon": data.get("icon", ""),
@@ -87,7 +87,7 @@ class State:
 		if evt_type == "AddRangeTimelineEvent":
 			return {
 				"type": "range",
-				"t": now,
+				"t": now + data.get("startOffset", 0.0),
 				"title": data.get("title", ""),
 				"desc": data.get("description", ""),
 				"icon": data.get("icon", ""),
@@ -100,7 +100,7 @@ class State:
 			handle = data.get("handle", 0)
 			with self._lock:
 				self._pending_ranges[handle] = {
-					"t": now,
+					"t": now + data.get("startOffset", 0.0),
 					"title": data.get("title", ""),
 					"desc": data.get("description", ""),
 					"icon": data.get("icon", ""),
@@ -150,12 +150,12 @@ class State:
 		if evt_type == "SetTimelineTooltip":
 			return {
 				"type": "tooltip",
-				"t": now,
+				"t": now + data.get("timeDelta", 0.0),
 				"text": data.get("description", ""),
 				"timeDelta": data.get("timeDelta", 0.0),
 			}
 		if evt_type == "ClearTimelineTooltip":
-			return {"type": "tooltip_clear", "t": now}
+			return {"type": "tooltip_clear", "t": now + data.get("timeDelta", 0.0)}
 		if evt_type == "SetTimelineGameMode":
 			return {"type": "gamemode", "t": now, "mode": data.get("mode", 0)}
 		if evt_type == "StartGamePhase":
@@ -243,7 +243,7 @@ def script_properties():
 	obs.obs_properties_add_float_slider(
 		props,
 		"delay",
-		"Embed delay (s) — wait before running FFmpeg",
+		"Embed delay (s) - wait before running FFmpeg",
 		0,
 		30,
 		0.5,
@@ -336,9 +336,22 @@ def _embed_thread(recording, orig_path):
 	if not video or not os.path.isfile(video):
 		print(f"[SteamTimeline] Could not find video: {orig_path}")
 		return
+	file_time = None
+	basename = os.path.basename(video)
+	try:
+		t_struct = time.strptime(basename[:19], "%Y-%m-%d %H-%M-%S")
+		file_time = time.mktime(t_struct)
+	except ValueError:
+		pass
+
 	with G._lock:
 		now = time.time()
-		start_t = (G._recording_start_t or 0) if recording else (now - G.replay_duration)
+		if recording:
+			start_t = file_time if file_time else (G._recording_start_t or 0)
+		else:
+			now = file_time if file_time else now
+			start_t = now - G.replay_duration
+
 		evts_raw = [e for e in G.events if start_t <= e["t"] <= now]
 		if not evts_raw:
 			total = len(G.events)

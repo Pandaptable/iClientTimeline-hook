@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <safetyhook.hpp>
 #include <thread>
+#include <string>
 
 #ifndef NDEBUG
 #define LOG(...) std::println(__VA_ARGS__)
@@ -316,6 +317,19 @@ BOOL WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpvReserved)
 				return TRUE;
 			}
 		}
+
+		std::string dllList = HOOK_DLLS;
+		size_t start = 0;
+		size_t end = dllList.find('|');
+		while (end != std::string::npos)
+		{
+			if (end != start)
+				LoadLibraryA(dllList.substr(start, end - start).c_str());
+			start = end + 1;
+			end = dllList.find('|', start);
+		}
+		if (start < dllList.length())
+			LoadLibraryA(dllList.substr(start).c_str());
 
 		FILE *fDummy = nullptr;
 #ifndef NDEBUG

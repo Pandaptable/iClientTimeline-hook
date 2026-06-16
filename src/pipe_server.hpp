@@ -52,18 +52,38 @@ public:
 
 	void Write(const std::string &type, json data = json::object())
 	{
-		std::string line = json{{"type", type}, {"data", data}}.dump() + "\n";
+		std::string line;
+		try {
+			line = json{{"type", type}, {"data", data}}.dump(-1, ' ', false, json::error_handler_t::replace) + "\n";
+		} catch (...) {
+			return;
+		}
 
 		std::lock_guard lock(m_mutex);
 		if (m_pipe == INVALID_HANDLE_VALUE)
 			return;
 
-		DWORD written;
-		if (!WriteFile(m_pipe, line.data(), static_cast<DWORD>(line.size()), &written, nullptr))
+		OVERLAPPED ov{};
+		ov.hEvent = CreateEventA(nullptr, TRUE, FALSE, nullptr);
+		
+		DWORD written = 0;
+		if (!WriteFile(m_pipe, line.data(), static_cast<DWORD>(line.size()), &written, &ov))
 		{
-			LOG("[Pipe] WriteFile failed ({}), client disconnected\n", GetLastError());
-			SetEvent(m_brokenEvent);
+			if (GetLastError() == ERROR_IO_PENDING)
+			{
+				if (!GetOverlappedResult(m_pipe, &ov, &written, TRUE))
+				{
+					LOG("[Pipe] WriteFile async failed ({}), client disconnected\n", GetLastError());
+					SetEvent(m_brokenEvent);
+				}
+			}
+			else
+			{
+				LOG("[Pipe] WriteFile failed ({}), client disconnected\n", GetLastError());
+				SetEvent(m_brokenEvent);
+			}
 		}
+		CloseHandle(ov.hEvent);
 	}
 
 private:
