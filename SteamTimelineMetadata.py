@@ -377,6 +377,8 @@ def _embed_thread(recording, orig_path):
 				video,
 				"-c",
 				"copy",
+				"-map",
+				"0",
 				"-movflags",
 				"use_metadata_tags",
 				"-metadata",
