@@ -1,6 +1,8 @@
 [uosc](https://github.com/tomasklaen/uosc) also required
 
-run convert_markers.py before using. any custom game icons can be gotten by dropping the markers.svg for it into the markers folder then regenerating.
+check my mpv repo at nemmy/codeberg or github at pandaptable/github for an always up to date (idk how often i'll update this)
+
+run convert_markers.py before using. any custom game icons can be gotten by dropping the markers.svg for it into the markers folder (subfolder supported) then regenerating.
 
 custom markers.svg's can be gathered from `https://shared.fastly.steamstatic.com/app_config/timeline/<appid>/<timeline_marker_svg from appinfo>`
 
