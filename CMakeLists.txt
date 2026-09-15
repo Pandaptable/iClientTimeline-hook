@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(SteamClientHook LANGUAGES CXX)
+project(SteamClientHook LANGUAGES CXX ASM_MASM)
 
 list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -13,8 +13,12 @@ add_library(SteamClientHook SHARED
     src/main.cpp
     src/memory.cpp
     src/dwmapi_proxy.cpp
+    src/dwmapi_stubs.asm
+    src/dwmapi.def
 )
 set_target_properties(SteamClientHook PROPERTIES OUTPUT_NAME "dwmapi")
+# dwmapi.lib/.exp are side effects of the /EXPORT forwarder pragmas; nothing imports them
+set_target_properties(SteamClientHook PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/implib")
 
 set(HOOK_DLLS "$ENV{HOOK_DLLS}")
 string(REPLACE ";" "|" HOOK_DLLS_STR "${HOOK_DLLS}")

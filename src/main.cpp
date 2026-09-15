@@ -6,6 +6,7 @@
 #include <thread>
 #include <string>
 
+void DwmProxy_Init();
 #ifndef NDEBUG
 #define LOG(...) std::println(__VA_ARGS__)
 #else
@@ -21,6 +22,8 @@ using ETimelineGameMode = int32_t;
 using ETimelineEventClipPriority = int32_t;
 using TimelineEventHandle_t = uint64_t;
 using SteamAPICall_t = uint64_t;
+
+void DwmProxy_Init();
 
 class IClientTimeline
 {
@@ -305,6 +308,10 @@ BOOL WINAPI DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpvReserved)
 	if (fdwReason == DLL_PROCESS_ATTACH)
 	{
 		DisableThreadLibraryCalls(hModule);
+
+		// Resolve every proxied dwmapi export from the real System32 copy
+		// before any caller can reach a stub — in every host process.
+		DwmProxy_Init();
 
 		char exePath[MAX_PATH];
 		if (GetModuleFileNameA(NULL, exePath, MAX_PATH))
